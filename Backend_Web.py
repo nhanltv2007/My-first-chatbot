@@ -29,7 +29,6 @@ def root():
     return {"status": "Chat-NHA backend is running"}
 
 
-
 class Question(BaseModel):
     question: str
 @app.post("/ask")
