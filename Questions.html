@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<style>
+    body {
+    font-family:Arial, sans-serif;
+    color: white;
+    background: #2f3038;
+    justify-content:center;
+    margin-top:40px;
+    }
+    h1 {
+    margin:10px;
+    }
+
+</style>
+<head>
+    <meta charset="UTF-8">
+    <title >Danh sách câu hỏi</title>
+</head>
+<body>
+    <h1 >Danh sách câu hỏi</h1>
+    <div id ="qa-list"></div>
+</body>
+<script>
+    fetch("/static/Raw_Questions.json")
+  .then(res => res.json())
+  .then(data => {
+
+                console.log("data type:", typeof data);
+                console.log("isArray:", Array.isArray(data));
+                console.log("data:", data);
+                const container = document.getElementById("qa-list");
+                data.forEach(item => {
+                  const block = document.createElement("div");
+                  block.innerHTML = `
+                    <h3>❓ ${item.question}</h3>
+                    <p>👉 ${item.answer}</p>
+                    <hr>
+                  `;
+                  container.appendChild(block);
+                });
+              });
+</script>
+</html>

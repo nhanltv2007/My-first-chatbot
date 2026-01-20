@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<style>
+  body {
+        font-family:Arial, sans-serif;
+        color: white;
+        background: #2f3038;
+        justify-content:center;
+        margin-top:40px;
+    }
+  input::placeholder,
+  textarea::placeholder{
+        font-size:18px;
+        font-style:italic;
+        opacity: 0.7;
+        color: white;
+    }
+  .Box{
+        font-family:Arial, sans-serif;
+        color: white;
+        position : relative;
+        width: 800px;
+        height: 50px;
+        background: #595a70;
+        margin-top: 10px;
+        border-radius: 22px;
+        font-size :18px;
+        margin-bottom: 50px;
+    }
+  .send-btn {
+
+        width: 150px;
+        height: 50px;
+        border-radius: 25px;
+
+        display: flex;
+        justify-content: center;
+        align-items: center;
+
+        background-color: black;
+        color: white;
+        border: none;
+        font-size: 24px;
+        cursor: pointer;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+
+   .search-wrapper {
+    position: relative;
+    width: 800px;
+}
+
+    /* Hộp gợi ý */
+    .suggest-Box {
+        position: absolute;
+        top: 60px;
+        left: 0;
+        width: 100%;
+        background: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+        overflow: hidden;
+        z-index: 100;
+    }
+
+    /* Từng gợi ý */
+    .suggest-item {
+        padding: 10px 14px;
+        font-size: 16px;
+        color: #111;
+        cursor: pointer;
+        transition: background 0.15s;
+    }
+
+
+</style>
+
+<head>
+    <meta charset="UTF-8">
+    <title>Chỉnh sửa Câu hỏi/Câu trả lời</title>
+</head>
+<body>
+    <h2>Tìm & chỉnh sửa câu hỏi</h2>
+    <div class="search-wrapper" id ="search-wrapper">
+    <!-- Ô tìm kiếm -->
+    <input id="search-input" class ="Box" placeholder="Nhập câu hỏi cần tìm..." />
+
+    <!-- Danh sách gợi ý -->
+    <div id="suggest-list" class="suggest-Box"></div>
+    </div>
+
+    <hr>
+
+    <!-- Ô chỉnh sửa -->
+    <input id="edit-question" class = "Box" placeholder="Chỉnh sửa câu hỏi" />
+    <textarea id="edit-answer" class="Box" placeholder="Chỉnh sửa câu trả lời"></textarea>
+
+    <button onclick="saveEdit()" class="send-btn">Lưu thay đổi</button>
+
+</body>
+
+<script>
+    document.getElementById("search-input").addEventListener("input", async (e) => {
+    const query = e.target.value.trim();
+    if (!query) return;
+
+    const res = await fetch("http://127.0.0.1:8001/search", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({ query: query, k: 5 })
+    });
+
+    const data = await res.json();
+    renderSuggest(data);
+});
+    function renderSuggest(list) {
+    const box = document.getElementById("suggest-list");
+    box.innerHTML = "";
+    box.style.display = "block";
+
+    list.forEach(item => {
+        const div = document.createElement("div");
+        div.innerText = item.question;
+        div.className = "suggest-item";
+
+        div.onclick = () => selectQA(item);
+        box.appendChild(div);
+    });
+}
+        document.addEventListener("click", (e) => {
+        const wrapper = document.getElementById("search-wrapper");
+        const suggestBox = document.getElementById("suggest-list");
+
+        if (!wrapper.contains(e.target)) {
+            suggestBox.style.display = "none";
+        }
+    });
+    let originalQuestion = "";
+
+    function selectQA(item) {
+        document.getElementById("edit-question").value = item.question;
+        document.getElementById("edit-answer").value = item.answer;
+        originalQuestion = item.question;
+    }
+    async function saveEdit() {
+    const newQ = document.getElementById("edit-question").value.trim();
+    const newA = document.getElementById("edit-answer").value.trim();
+
+    if (!newQ || !newA) return;
+
+    await fetch("http://127.0.0.1:8001/update_qa", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+            old_question: originalQuestion,
+            new_question: newQ,
+            new_answer: newA
+        })
+    });
+
+    alert("Đã cập nhật");
+    }
+
+</script>
+</html>

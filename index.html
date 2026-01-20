@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Hỏi Đáp</title>
+</head>
+<style>
+    body {
+        font-family:Arial, sans-serif;
+        color: white;
+        background: #2f3038;
+        display:flex;
+        justify-content:center;
+        margin-top:40px;
+    }
+    input::placeholder{
+        font-size:18px;
+        font-style:italic;
+        opacity: 0.7;
+        color: white;
+    }
+    .chat-container {
+        width:720px;
+        margin:40px auto;
+        display:flex;
+        flex-direction:column;
+        height:500px;
+        color: white;
+    }
+    .chat-prompt{
+        position : relative;
+        width: 700px;
+        height: 40px;
+        background: #595a70;
+        margin-top: 10px;
+        border-radius: 22px;
+        font-size :18px;
+    }
+    .chat-input {
+        width: 100%;
+        height: 100%;
+        border: none;
+        background: transparent;
+        color: white;
+        padding: 0 50px 0 15px;
+        font-size: 18px;
+        outline: none;
+    }
+
+    .chat-box {
+        display:flex;
+        flex-direction:column;
+        width: 700px;
+        height: 400px;
+        background:#2f3038 ;
+        border-radius:8px;
+        padding:20px;
+        color:white;
+        overflow-y:auto;
+    }
+    .messages{
+        max-width: 70%;
+        padding: 10px 14px;
+        margin-bottom: 10px;
+        border-radius: 14px;
+        line-height: 1.4;
+
+    }
+    .messages.bot{
+        background: #3a3d42;
+        color:white;
+        align-self:flex-start;
+    }
+    .messages.user {
+        background: #007bff;
+        color:white;
+        align-self:flex-end
+    }
+    .user {color:white;}
+    .bot  {color:white;}
+
+    .send-btn {
+        position: absolute;
+        top: -2px;
+        right: -5px;
+
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+
+        display: flex;
+        justify-content: center;
+        align-items: center;
+
+        background-color: black;
+        color: white;
+        border: none;
+        font-size: 24px;
+        cursor: pointer;
+    }
+
+    /* Container ở góc màn hình */
+    .fab-container {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      display: flex;
+      flex-direction: column-reverse;
+      align-items: center;
+    }
+
+    /* Nút chính */
+    .fab-main {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      font-size: 30px;
+      cursor: pointer;
+      z-index: 10;
+      transition: transform 0.3s;
+    }
+
+    /* Các thanh nhỏ (mặc định ẩn) */
+    .fab-options {
+      display: flex;
+      flex-direction: column-reverse;
+      gap: 10px;
+      margin-bottom: 15px;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(20px);
+      transition: all 0.3s ease;
+    }
+
+    /* Các mục nhỏ trong mục lục */
+    .fab-item {
+      background-color: #333;
+      color: white;
+      padding: 8px 15px;
+      border-radius: 20px;
+      font-size: 14px;
+      white-space: nowrap;
+      cursor: pointer;
+    }
+
+    /* Class này sẽ được JS thêm vào để hiển thị */
+    .fab-container.active .fab-options {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+    }
+
+    /* Xoay nút chính khi mở */
+    .fab-container.active .fab-main {
+      transform: rotate(45deg);
+      background-color: #dc3545;
+    }
+
+</style>
+<body>
+<div class ="chat-container">
+    <h3>Hỏi đáp</h3>
+    <div class="chat-box" id ="chat-box">
+<!--        Phần xuất hiện tin nhắn-->
+        <div class = "messages bot"> Xin chào, tôi có thể giúp gì?</div>
+    </div>
+    <div  class ="chat-prompt">
+        <button onclick="sendQuestion()" class="send-btn">&#10132;</button>
+
+        <input type="text" id="question" class="chat-input" placeholder="Nhập câu hỏi..." onkeydown="if (event.key === 'Enter') sendQuestion()">
+    </div>
+
+</div>
+
+<div class="fab-container">
+  <div class="fab-options" id="fabOptions">
+    <div class="fab-item" onclick="window.location.href = '/questions'">Danh sách câu hỏi</div>
+    <div class="fab-item" onclick="window.location.href = '/add'">Thêm câu hỏi</div>
+    <div class="fab-item" onclick="window.location.href = '/fix'">Chỉnh sửa Câu hỏi/Câu trả lời</div>
+  </div>
+
+  <button class="fab-main" id="fabMain">
+    <span>+</span>
+  </button>
+</div>
+
+<script>
+        const fabContainer = document.querySelector('.fab-container');
+        const fabMain = document.getElementById('fabMain');
+
+        fabMain.addEventListener('click', () => {
+          // Toggle class active để kích hoạt CSS hiển thị các thanh nhỏ
+          fabContainer.classList.toggle('active');
+        });
+
+        // (Tùy chọn) Đóng menu khi bấm ra ngoài
+        document.addEventListener('click', (e) => {
+          if (!fabContainer.contains(e.target)) {
+            fabContainer.classList.remove('active');
+          }
+        });
+    async function sendQuestion(){
+        const input = document.getElementById("question");
+        const question = input.value.trim();
+        if (!question) return;
+
+        const chatBox = document.getElementById("chat-box")
+
+        //Tin nhắn user
+        // Dòng này có nghĩa là tạo một thẻ div gắn với class message user, rồi chèn question vào thẻ div, lưu vào chatBox và xóa prompt
+        const userMsg = document.createElement("div");
+        userMsg.className = "messages user";
+        userMsg.innerText = question;
+        chatBox.appendChild(userMsg);
+        input.value = "";
+
+        //Cuộn xuống
+        chatBox.scrollTop = chatBox.scrollHeight;
+
+        //Máy trả lời
+        const response = await fetch("http://127.0.0.1:8001/ask",{
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({question:question})
+        });
+
+        const data = await response.json();
+
+        const botMsg = document.createElement("div");
+        botMsg.className = "messages bot";
+        botMsg.innerText = data.answer;
+        chatBox.appendChild(botMsg);
+        chatBox.scrollTop = chatBox.scrollHeight;
+
+
+    }
+</script>
+</body>
+</html>
